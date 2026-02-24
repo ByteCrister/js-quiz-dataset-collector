@@ -268,7 +268,7 @@ async function finishQuiz() {
 
     try {
         const response = await fetch(
-            'https://js-quiz-dataset-collector-proxy-6wp19xs5t.vercel.app/api/submit', // Vercel function
+            'https://js-quiz-dataset-collector-proxy.vercel.app/api/submit', // Vercel function
             {
                 method: 'POST',
                 headers: {
