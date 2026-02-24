@@ -277,16 +277,6 @@ async function finishQuiz() {
                 body: JSON.stringify(payload)
             }
         );
-        // const response = await fetch(
-        //     'https://script.google.com/macros/s/AKfycbwjqrXiY-K9V9A8H5HI_aoDYbN4GVF41gtn7x09rRK1VPxsnqR9qZi6QHxPDeC9nuRQKw/exec',
-        //     {
-        //         method: 'POST',
-        //         // headers: {
-        //         //     'Content-Type': 'application/json'
-        //         // },
-        //         body: JSON.stringify(payload)
-        //     }
-        // );
 
         if (!response.ok) {
             throw new Error(`Network error: ${response.status}`);
