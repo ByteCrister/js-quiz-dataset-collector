@@ -251,10 +251,11 @@ async function finishQuiz() {
     submissionStatus.textContent = 'Submitting your responses...';
 
     // Prepare payload for Google Sheets
-    // Send question difficulty and time spent instead of selected answers
+    // Send question difficulty, topic and time spent instead of selected answers
     const answerPayload = userAnswers.map((ans, idx) => ({
         questionId: ans.questionId,
         difficulty: userQuestions[idx].difficulty,
+        topic: userQuestions[idx].topic,
         timeSpent: ans.timeSpent
     }));
 
@@ -269,7 +270,7 @@ async function finishQuiz() {
     try {
         // Replace with your actual Google Apps Script URL
         const response = await fetch(
-            'https://script.google.com/macros/s/AKfycbynOOccnnhWXOfg2ubIv_n1KCP5ZhJb0LO5orKGlF68EFwC1PABYSIJdFP6Yi64o7xryw/exec',
+            'https://script.google.com/macros/s/AKfycbyr482dmxOvEAyKgz6Qd9RLD34F2LpNwD6gcz5xbFu8xOav4SWcw4mFWWkEAm8BIzq_iw/exec',
             {
                 method: 'POST',
                 body: JSON.stringify(payload)
