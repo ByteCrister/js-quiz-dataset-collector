@@ -251,7 +251,6 @@ async function finishQuiz() {
     submissionStatus.textContent = 'Submitting your responses...';
 
     // Prepare payload for Google Sheets
-    // Send question difficulty, topic and time spent instead of selected answers
     const answerPayload = userAnswers.map((ans, idx) => ({
         questionId: ans.questionId,
         difficulty: userQuestions[idx].difficulty,
@@ -260,24 +259,27 @@ async function finishQuiz() {
     }));
 
     const payload = {
-        email: emailInput.value,
-        yearsExperience: yearsExpInput.value,
-        selfRating: selfRatingSelect.value,
+        email: emailInput.value.trim(),
+        yearsExperience: Number(yearsExpInput.value),
+        selfRating: Number(selfRatingSelect.value),
         answers: answerPayload,
         totalScore: calculateScore()
     };
 
     try {
-        // Replace with your actual Google Apps Script URL
         const response = await fetch(
-            'https://script.google.com/macros/s/AKfycbyr482dmxOvEAyKgz6Qd9RLD34F2LpNwD6gcz5xbFu8xOav4SWcw4mFWWkEAm8BIzq_iw/exec',
+            'https://script.google.com/macros/s/AKfycbwjqrXiY-K9V9A8H5HI_aoDYbN4GVF41gtn7x09rRK1VPxsnqR9qZi6QHxPDeC9nuRQKw/exec',
             {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(payload)
             }
         );
+
         if (!response.ok) {
-            throw new Error("Network response was not ok");
+            throw new Error(`Network error: ${response.status}`);
         }
 
         const result = await response.json();
@@ -285,14 +287,20 @@ async function finishQuiz() {
         if (result.status === "success") {
             submissionStatus.textContent = 'Submission successful! Thank you.';
         } else {
-            // Show alert with server message
             alert(result.message || "Submission failed. Please check your connection.");
             submissionStatus.textContent = 'Submission failed.';
         }
 
     } catch (error) {
         console.error('Submission error:', error);
-        submissionStatus.textContent = 'Submission failed. Please check your connection.';
+
+        // Show friendly error for production users
+        submissionStatus.textContent = `
+        Submission failed. Possible reasons:
+        1. Network issue
+        2. Already submitted with this email
+        3. CORS or server problem
+      `;
     }
 }
 
