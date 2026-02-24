@@ -1,5 +1,5 @@
 // ==================== GLOBAL VARIABLES ====================
-let userQuestions = [];             // will hold 10 randomly selected questions
+let userQuestions = [];             // will hold 10 selected questions
 let currentIndex = 0;
 let userAnswers = [];               // { questionId, selectedAnswer, timeSpent }
 let questionStartTime = null;
@@ -11,6 +11,9 @@ let quizStarted = false;
 const JS_START_YEAR = 1995;
 const CURRENT_YEAR = new Date().getFullYear();
 const MAX_JS_EXPERIENCE = CURRENT_YEAR - JS_START_YEAR;
+
+// Local storage key for per-question usage tracking (to reduce repetition)
+const USAGE_STORAGE_KEY = 'jsQuizQuestionUsage.v1';
 
 // DOM elements
 const openingModal = document.getElementById('openingModal');
@@ -29,9 +32,49 @@ const selfRatingSelect = document.getElementById('selfRating');
 const submissionStatus = document.getElementById('submissionStatus');
 
 // ==================== INITIALISATION ====================
+function loadQuestionUsage() {
+    try {
+        const raw = localStorage.getItem(USAGE_STORAGE_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+        return {};
+    }
+}
+
+function saveQuestionUsage(usage) {
+    try {
+        localStorage.setItem(USAGE_STORAGE_KEY, JSON.stringify(usage));
+    } catch {
+        // ignore storage errors (e.g. disabled cookies)
+    }
+}
+
+// Prefer questions that have been used less often in this browser
 function selectRandomQuestions(count) {
-    const shuffled = [...questions].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, count);
+    const usage = loadQuestionUsage();
+
+    const withUsage = questions.map(q => ({
+        q,
+        used: usage[q.id] || 0
+    }));
+
+    // Sort by usage count (ascending), then random for tie-breaking
+    withUsage.sort((a, b) => {
+        if (a.used !== b.used) return a.used - b.used;
+        return Math.random() - 0.5;
+    });
+
+    const selected = withUsage.slice(0, count).map(item => item.q);
+
+    // Update usage counts for selected questions
+    selected.forEach(q => {
+        usage[q.id] = (usage[q.id] || 0) + 1;
+    });
+    saveQuestionUsage(usage);
+
+    return selected;
 }
 
 function initialiseQuizState() {

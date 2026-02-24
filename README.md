@@ -135,7 +135,3 @@ You can extend the Apps Script to:
 - Add or edit questions in `questions.js` (adjust `difficulty` tags as needed).
 - Tweak UI visuals in `styles.css` to match your branding.
 - Extend the payload in `finishQuiz()` if you need more signals (e.g. number of focus losses).
-
-### License
-
-Add your chosen license here (e.g. MIT, Apache‑2.0) depending on how you intend to distribute or reuse this project.
