@@ -3,9 +3,13 @@ let userQuestions = [];             // will hold 10 selected questions
 let currentIndex = 0;
 let userAnswers = [];               // { questionId, selectedAnswer, timeSpent }
 let questionStartTime = null;
-let timerInterval = null;
+let timerInterval = null;           // global exam countdown timer
 let warningShown = false;
 let quizStarted = false;
+let examFinished = false;
+
+const EXAM_DURATION_SECONDS = 180;  // 3 minutes for the whole exam
+let examRemainingSeconds = EXAM_DURATION_SECONDS;
 
 // JavaScript was first introduced in 1995; nobody can have more experience than that
 const JS_START_YEAR = 1995;
@@ -26,6 +30,7 @@ const questionText = document.getElementById('questionText');
 const optionsArea = document.getElementById('optionsArea');
 const questionCounter = document.getElementById('questionCounter');
 const warningMsg = document.getElementById('warningMessage');
+const examTimerDisplay = document.getElementById('examTimer');
 const emailInput = document.getElementById('email');
 const yearsExpInput = document.getElementById('yearsExp');
 const selfRatingSelect = document.getElementById('selfRating');
@@ -142,6 +147,15 @@ function handleSuspiciousBehavior(reason) {
 
     // Stop any timing
     stopTimerForCurrentQuestion();
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    examFinished = false;
+    examRemainingSeconds = EXAM_DURATION_SECONDS;
+    if (examTimerDisplay) {
+        examTimerDisplay.textContent = '';
+    }
 
     // Reset view back to opening screen
     quizContainer.classList.add('hidden');
@@ -166,9 +180,7 @@ function showWarning(message) {
 
 // ==================== QUIZ TIMING ====================
 function startTimerForCurrentQuestion() {
-    if (timerInterval) clearInterval(timerInterval);
     questionStartTime = Date.now();
-    // Optional: update a live timer display if desired
 }
 
 function stopTimerForCurrentQuestion() {
@@ -177,6 +189,44 @@ function stopTimerForCurrentQuestion() {
         userAnswers[currentIndex].timeSpent += elapsed;
         questionStartTime = null;
     }
+}
+
+function formatTime(seconds) {
+    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+}
+
+function updateExamTimerDisplay() {
+    if (!examTimerDisplay) return;
+    examTimerDisplay.textContent = `Time left: ${formatTime(examRemainingSeconds)}`;
+}
+
+function startExamTimer() {
+    examRemainingSeconds = EXAM_DURATION_SECONDS;
+    updateExamTimerDisplay();
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        examRemainingSeconds -= 1;
+        if (examRemainingSeconds <= 0) {
+            examRemainingSeconds = 0;
+            updateExamTimerDisplay();
+            clearInterval(timerInterval);
+            timerInterval = null;
+            handleExamTimeUp();
+        } else {
+            updateExamTimerDisplay();
+        }
+    }, 1000);
+}
+
+function handleExamTimeUp() {
+    if (examFinished) return;
+    examFinished = true;
+    quizStarted = false;
+    stopTimerForCurrentQuestion();
+    // Automatically submit the quiz when time runs out
+    finishQuiz(true);
 }
 
 // ==================== RENDER QUESTION ====================
@@ -244,19 +294,32 @@ function goToPrev() {
 }
 
 // ==================== FINISH QUIZ ====================
-async function finishQuiz() {
+async function finishQuiz(autoSubmitted = false) {
+    if (examFinished && !autoSubmitted) return;
+    examFinished = true;
+    quizStarted = false;
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+    stopTimerForCurrentQuestion();
+
     // Hide quiz, show thank you modal
     quizContainer.classList.add('hidden');
     thankYouModal.classList.remove('hidden');
     submissionStatus.textContent = 'Submitting your responses...';
 
     // Prepare payload for Google Sheets
-    const answerPayload = userAnswers.map((ans, idx) => ({
-        questionId: ans.questionId,
-        difficulty: userQuestions[idx].difficulty,
-        topic: userQuestions[idx].topic,
-        timeSpent: ans.timeSpent
-    }));
+    const answerPayload = userAnswers.map((ans, idx) => {
+        const isUnanswered = ans.selectedAnswer === null;
+        const timeValue = isUnanswered ? 1 : ans.timeSpent;
+        return {
+            questionId: ans.questionId,
+            difficulty: userQuestions[idx].difficulty,
+            topic: userQuestions[idx].topic,
+            timeSpent: timeValue
+        };
+    });
 
     const payload = {
         email: emailInput.value.trim(),
@@ -342,6 +405,8 @@ startBtn.addEventListener('click', () => {
     // Prepare a fresh quiz with new random questions
     initialiseQuizState();
     quizStarted = true;
+    examFinished = false;
+    startExamTimer();
     // Hide opening modal, show quiz
     openingModal.classList.add('hidden');
     quizContainer.classList.remove('hidden');

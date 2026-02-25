@@ -206,6 +206,15 @@ body {
   color: #e5e7eb;
 }
 
+.exam-timer {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f97316;
+  min-width: 120px;
+  text-align: center;
+}
+
 .warning {
   color: #f97316;
   font-size: 0.8rem;

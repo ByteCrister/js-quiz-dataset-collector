@@ -16,6 +16,7 @@
       <ul>
         <li>Answer 10 multiple‑choice questions.</li>
         <li>You can navigate back and change answers.</li>
+        <li>You have 3 minutes to complete the exam. It will auto-submit when time runs out.</li>
         <li>Do not switch tabs or minimise the window – this will be recorded.</li>
         <li>Copy/paste and right‑click are disabled.</li>
       </ul>
@@ -37,7 +38,7 @@
           <option value="5">5 – Expert</option>
         </select>
 
-        <button type="button" id="startQuizBtn">Start Quiz</button>
+        <button type="button" id="startQuizBtn">Start Exam</button>
       </form>
     </div>
   </div>
@@ -46,6 +47,7 @@
   <div id="quizContainer" class="hidden">
     <div class="progress">
       <span id="questionCounter">Question 1 of 10</span>
+      <span id="examTimer" class="exam-timer"></span>
       <span id="warningMessage" class="warning"></span>
     </div>
     <div id="questionArea">
